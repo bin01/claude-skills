@@ -1,0 +1,25 @@
+schema_version: "1.1"
+name: architecture-overview
+description: Large multi-subsystem reading (about 20k lines); should load the orchestrate skill and fan out 3+ executors.
+tags: [code-read, large]
+runs: 2
+context:
+  scaffold_script: fixture.sh
+execution:
+  max_turns: 40
+  timeout_seconds: 1500
+  allowed_tools: [Read, Glob, Grep, Skill, Agent, TaskCreate, TaskUpdate, TaskList, TaskGet]
+  prompt: |
+    The redis-py repo is checked out in ./redis-py. Write an architecture overview (under 500 words, with file:line citations) of four subsystems and how they connect: (1) the sync client (redis/client.py), (2) the asyncio client (redis/asyncio/client.py), (3) cluster routing in redis/cluster.py, and (4) connections and connection pools in redis/connection.py and redis/asyncio/connection.py. This is a large codebase, so plan the work and delegate the reading to cheap helpers.
+graders:
+  - name: architecture
+    type: llm
+    criteria: |
+      Judge this as an architecture overview: structure and how the parts connect, not low-level constants. Score PASS only if it covers all four subsystems AND correctly states at least 5 of these 7 facts, with nothing contradicting them (extra correct detail is fine; ignore length):
+      1. The sync Redis class gets its command methods from mixins (e.g. CoreCommands) and they all route through execute_command.
+      2. If no connection_pool is passed, the client builds its own ConnectionPool.
+      3. A command takes a connection from the pool, sends and parses it inside a retry wrapper (call_with_retry), and releases the connection back to the pool afterwards.
+      4. The asyncio client mirrors the sync request path with await and uses the asyncio ConnectionPool/Connection classes.
+      5. RedisCluster maps keys to slots and nodes (via a NodesManager), and each cluster node gets its own Redis client with its own connection pool.
+      6. A Connection owns the socket and a RESP protocol parser (with hiredis or pure-Python parser options) that reads replies.
+      7. There are plain and Blocking connection pools: the plain one fails when max_connections is exhausted, the blocking one waits for a free connection.

@@ -1,0 +1,27 @@
+schema_version: "1.1"
+name: map-cluster-routing
+description: Large single-subsystem code reading; using executors should pay off.
+tags: [code-read, executors]
+runs: 2
+context:
+  scaffold_script: fixture.sh
+execution:
+  max_turns: 30
+  timeout_seconds: 900
+  allowed_tools: [Read, Glob, Grep, Skill, Agent, TaskCreate, TaskUpdate, TaskList, TaskGet]
+  prompt: |
+    The redis-py repo is checked out in ./redis-py. Explain how the synchronous RedisCluster client routes a command to a node and recovers from cluster errors: how a key's slot is computed (including hash tags), and what happens on MOVED, ASK, TryAgain and connection errors, including any retry or TTL limits and when the slot map is refreshed. Keep it under 300 words with file:line citations. Delegate the code reading to cheap helpers to keep cost down.
+graders:
+  - name: facts
+    type: llm
+    criteria: |
+      Score PASS only if the answer correctly states at least 6 of these 8 facts and states nothing contradicting them. Extra correct detail or a more precise version of a fact is not a contradiction:
+      1. Slot = CRC16 of the key (crc_hqx) modulo 16384 (redis/crc.py).
+      2. Hash tags: if the key has a non-empty {...} section, only that part is hashed.
+      3. Each command is retried in a loop bounded by a request TTL of 16 (RedisClusterRequestTTL).
+      4. On MOVED, a reinitialize counter is incremented; every reinitialize_steps (default 5) MOVED errors trigger a full topology refresh (nodes_manager.initialize), otherwise just the moved slot is updated.
+      5. On ASK, the next attempt targets the redirect node and sends ASKING before the command.
+      6. On TryAgain it retries, sleeping 0.05 s once the remaining TTL is below half (ttl < 8); stating just 'sleeps 0.05 s' is acceptable.
+      7. On ConnectionError/TimeoutError the failed node is deprioritized and/or the topology is reinitialized, and the error is re-raised to the outer retry.
+      8. Outer retries are governed by a Retry object whose count comes from cluster_error_retry_attempts (default 10) unless a retry is passed in; describing it as retry.get_retries() attempts on retryable errors is acceptable.
+      Citations do not need exact line numbers, but must point to the right files.

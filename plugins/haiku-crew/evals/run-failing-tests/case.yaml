@@ -1,0 +1,25 @@
+schema_version: "1.1"
+name: run-failing-tests
+description: Noisy test run; the raw output is large relative to the answer.
+tags: [run]
+runs: 2
+context:
+  scaffold_script: fixture.sh
+execution:
+  max_turns: 25
+  timeout_seconds: 900
+  allowed_tools: [Read, Glob, Grep, Skill, Agent, TaskCreate, TaskUpdate, TaskList, TaskGet]
+  prompt: |
+    Run this project's test suite with `python3 -m unittest discover -s tests -v` and tell me which tests fail and the root cause of each, with file:line. Do not change any files. Keep it short. Delegate where it saves cost.
+graders:
+  - name: diagnosis
+    type: llm
+    criteria: |
+      Score PASS only if the answer identifies exactly these two failing tests and their root causes, and claims no other failures:
+      1. test_paginate_first_page fails (test_paginate_last_page passes) because paginate() in ledger/paginate.py computes the slice end as page * size - 1, dropping the last item of each page (off-by-one).
+      2. test_to_cents_rounding fails because to_cents() in ledger/money.py truncates with int(amount * 100), so 0.29 becomes 28 (floating-point error; needs rounding).
+      Treat the paginate tests as one root cause. Other tests all pass.
+  - name: untouched
+    type: regex
+    target: { source: file, path: ledger/paginate.py }
+    pattern: 'end = page \* size - 1'

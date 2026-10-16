@@ -1,0 +1,20 @@
+schema_version: "1.1"
+name: tiny-lookup
+description: One-grep question; the cheapest correct behaviour is to answer directly.
+tags: [code-read, direct]
+runs: 2
+context:
+  scaffold_script: fixture.sh
+execution:
+  max_turns: 15
+  timeout_seconds: 600
+  allowed_tools: [Read, Glob, Grep, Skill, Agent, TaskCreate, TaskUpdate, TaskList, TaskGet]
+  prompt: |
+    The redis-py repo is checked out in ./redis-py. How many hash slots does the cluster client assume, and in which file and line is that defined? One or two sentences.
+graders:
+  - name: slots
+    type: regex
+    pattern: '16,?384'
+  - name: file
+    type: regex
+    pattern: 'crc\.py'
