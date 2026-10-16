@@ -14,10 +14,7 @@
     },
     {
       "name": "haiku-crew",
-      "source": {
-        "source": "github",
-        "repo": "bin01/haiku-crew"
-      },
+      "source": "./plugins/haiku-crew",
       "description": "Haiku executors (reader, web-researcher, runner, visual-reviewer, editor) and an orchestrate skill for Opus-plans/Haiku-executes delegation."
     }
   ]

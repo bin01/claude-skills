@@ -1,0 +1,24 @@
+schema_version: "1.1"
+name: compare-pools
+description: Two disjoint large files compared; tests disjoint scoping.
+tags: [code-read, executors]
+runs: 2
+context:
+  scaffold_script: fixture.sh
+execution:
+  max_turns: 30
+  timeout_seconds: 900
+  allowed_tools: [Read, Glob, Grep, Skill, Agent, TaskCreate, TaskUpdate, TaskList, TaskGet]
+  prompt: |
+    The redis-py repo is checked out in ./redis-py. Compare the synchronous connection pools (redis/connection.py) with the asyncio ones (redis/asyncio/connection.py): ConnectionPool vs BlockingConnectionPool in each, what happens when the pool is exhausted, the default wait timeout, and the waiting mechanism each uses. Under 250 words, a small comparison table is fine, with file:line citations. Delegate the code reading to cheap helpers to keep cost down.
+graders:
+  - name: facts
+    type: llm
+    criteria: |
+      Score PASS only if the answer correctly states at least 5 of these 6 facts and nothing contradicting them. Extra correct detail is not a contradiction:
+      1. A plain ConnectionPool raises MaxConnectionsError("Too many connections") when max_connections is exceeded, in both sync and asyncio.
+      2. BlockingConnectionPool instead waits for a free connection.
+      3. BlockingConnectionPool's default timeout is 20 seconds in both sync and asyncio.
+      4. Sync BlockingConnectionPool uses a queue (LifoQueue by default, queue_class) sized to max_connections.
+      5. Asyncio BlockingConnectionPool waits on an asyncio.Condition (wait_for with an async timeout), not a queue.
+      6. On timeout both raise ConnectionError("No connection available.").

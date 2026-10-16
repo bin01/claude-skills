@@ -1,0 +1,36 @@
+schema_version: "1.1"
+name: bulk-config-edits
+description: Mechanical edits across 30 files; tests whether the planner picks the cheapest correct route.
+tags: [edit]
+runs: 2
+context:
+  scaffold_script: fixture.sh
+execution:
+  max_turns: 25
+  timeout_seconds: 900
+  allowed_tools: [Read, Glob, Grep, Skill, Agent, TaskCreate, TaskUpdate, TaskList, TaskGet]
+  prompt: |
+    In every services/*/*/config.yaml: rename the key timeout_ms to request_timeout_ms, keeping its value. In prod configs only, change replicas from 2 to 3. Change nothing else. Then tell me in one line what you changed. Delegate where it saves cost.
+graders:
+  - name: billing-prod
+    type: regex
+    target: { source: file, path: services/billing/prod/config.yaml }
+    pattern: 'replicas: 3[\s\S]*request_timeout_ms: 1250\b'
+  - name: gateway-prod
+    type: regex
+    target: { source: file, path: services/gateway/prod/config.yaml }
+    pattern: 'replicas: 3[\s\S]*request_timeout_ms: 8000\b'
+  - name: search-staging
+    type: regex
+    target: { source: file, path: services/search/staging/config.yaml }
+    pattern: 'replicas: 2[\s\S]*request_timeout_ms: 2250\b'
+  - name: users-dev
+    type: regex
+    target: { source: file, path: services/users/dev/config.yaml }
+    pattern: 'replicas: 2[\s\S]*request_timeout_ms: 7000\b'
+  - name: no-old-key
+    type: regex
+    target: { source: file, path: services/reports/dev/config.yaml }
+    pattern: '^\s+timeout_ms:'
+    flags: m
+    match: not_contains

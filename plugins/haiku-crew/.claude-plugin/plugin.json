@@ -1,0 +1,7 @@
+{
+  "name": "haiku-crew",
+  "version": "0.4.0",
+  "description": "Haiku executors (reader, web-researcher, runner, visual-reviewer, editor) with strict tool allowlists, an orchestrate skill for large jobs, and an eval suite.",
+  "author": { "name": "Snehal" },
+  "keywords": ["subagents", "orchestration", "haiku", "token-cost"]
+}

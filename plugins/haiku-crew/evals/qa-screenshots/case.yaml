@@ -1,0 +1,24 @@
+schema_version: "1.1"
+name: qa-screenshots
+description: Visual QA of renders; images should not need to sit in the planner's context.
+tags: [visual]
+runs: 2
+context:
+  scaffold_script: fixture.sh
+execution:
+  max_turns: 20
+  timeout_seconds: 600
+  allowed_tools: [Read, Glob, Grep, Skill, Agent, TaskCreate, TaskUpdate, TaskList, TaskGet]
+  prompt: |
+    Before I ship, QA the three screenshots in ./shots (pricing, signup, dashboard). List every visual defect, most severe first, one line each. Delegate where it saves cost.
+graders:
+  - name: defects
+    type: llm
+    criteria: |
+      Six defects are planted. Score PASS only if the answer reports at least 5 of them:
+      1. pricing: the main heading runs off the right edge (clipped/cut off).
+      2. pricing: placeholder "Lorem ipsum" text in the FAQ.
+      3. signup: the primary button reads "TODO: label".
+      4. signup: the password hint text is nearly invisible (very low contrast).
+      5. dashboard: the chart area is an empty placeholder ("Chart goes here").
+      6. dashboard: the "Revenue this month" label overlaps or spills outside its card into the "Active users" card.
