@@ -1,0 +1,5 @@
+{
+  "name": "raise-the-bar",
+  "version": "0.1.0",
+  "description": "Rewrites a task prompt to be more ambitious along altitude, depth, or range before running it."
+}
