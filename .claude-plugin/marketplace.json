@@ -1,12 +1,24 @@
 {
   "name": "bin01-skills",
-  "owner": { "name": "Snehal" },
-  "metadata": { "description": "Personal Claude skills" },
+  "owner": {
+    "name": "Snehal"
+  },
+  "metadata": {
+    "description": "Personal Claude skills"
+  },
   "plugins": [
     {
       "name": "raise-the-bar",
       "source": "./plugins/raise-the-bar",
       "description": "Rewrites a task prompt to be more ambitious along altitude, depth, or range before running it."
+    },
+    {
+      "name": "haiku-crew",
+      "source": {
+        "source": "github",
+        "repo": "bin01/haiku-crew"
+      },
+      "description": "Haiku executors (reader, web-researcher, runner, visual-reviewer, editor) and an orchestrate skill for Opus-plans/Haiku-executes delegation."
     }
   ]
 }
